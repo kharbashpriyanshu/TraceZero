@@ -1,6 +1,6 @@
 # TraceZero ⚡
 
-> **Smart application trace cleaner for Windows**
+> **Smart TraceZero for Windows**
 
 TraceZero detects and safely removes leftover files, folders, cache, logs, registry traces, and temporary files left behind by uninstalled or unused applications — all with a beautiful dark-themed desktop UI.
 
@@ -48,7 +48,7 @@ python main.py
 
 ```
 TraceZero/
-├── app_trace_cleaner/
+├── tracezero/
 │   ├── scanner/
 │   │   ├── file_scanner.py       # Multithreaded filesystem scanner
 │   │   └── scan_engine.py        # Orchestrates entire scan pipeline

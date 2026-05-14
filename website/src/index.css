@@ -1,0 +1,59 @@
+/* ─── TraceZero Global Styles — Premium Upgrade ───── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:           #080c10;
+  --bg-card:      #0f1419;
+  --bg-panel:     #141a21;
+  --bg-glass:     rgba(15,20,25,0.7);
+  --accent:       #58a6ff;
+  --accent-light: #79c0ff;
+  --accent-dim:   rgba(88,166,255,0.15);
+  --green:        #3fb950;
+  --green-dim:    rgba(63,185,80,0.15);
+  --yellow:       #e3b341;
+  --yellow-dim:   rgba(227,179,65,0.15);
+  --red:          #f85149;
+  --red-dim:      rgba(248,81,73,0.15);
+  --purple:       #bc8cff;
+  --purple-dim:   rgba(188,140,255,0.15);
+  --orange:       #ffa657;
+  --orange-dim:   rgba(255,166,87,0.15);
+  --text-1:       #e6edf3;
+  --text-2:       #8b949e;
+  --border:       #21272e;
+  --border-bright:#30363d;
+  --hover:        #161b22;
+  --radius:       14px;
+  --radius-sm:    8px;
+  --font:         'Inter', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.65;
+  overflow-x: hidden;
+}
+
+/* selection */
+::selection { background: rgba(88,166,255,.25); color: var(--text-1); }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-2); }
+
+code {
+  font-family: var(--font-mono);
+  background: rgba(110,118,129,.12);
+  border: 1px solid var(--border);
+  padding: 2px 7px; border-radius: 5px;
+  font-size: .82em; color: var(--accent-light);
+}

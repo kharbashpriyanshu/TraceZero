@@ -1,7 +1,7 @@
 """
 tests/test_safety.py
 
-Safety tests for App Trace Cleaner.
+Safety tests for TraceZero.
 Ensures that forbidden paths are NEVER scanned or deleted.
 Run with: python -m pytest tests/
 """
@@ -14,8 +14,8 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app_trace_cleaner.utils.helpers import is_path_safe, is_protected_package
-from app_trace_cleaner.utils.constants import FORBIDDEN_PATHS
+from tracezero.utils.helpers import is_path_safe, is_protected_package
+from tracezero.utils.constants import FORBIDDEN_PATHS
 
 
 class TestPathSafety:
@@ -83,23 +83,23 @@ class TestHelpers:
     """Test utility helper functions."""
 
     def test_format_size_bytes(self):
-        from app_trace_cleaner.utils.helpers import format_size
+        from tracezero.utils.helpers import format_size
         assert "B" in format_size(512)
 
     def test_format_size_kb(self):
-        from app_trace_cleaner.utils.helpers import format_size
+        from tracezero.utils.helpers import format_size
         assert "KB" in format_size(2048)
 
     def test_format_size_mb(self):
-        from app_trace_cleaner.utils.helpers import format_size
+        from tracezero.utils.helpers import format_size
         assert "MB" in format_size(2 * 1024 * 1024)
 
     def test_format_size_gb(self):
-        from app_trace_cleaner.utils.helpers import format_size
+        from tracezero.utils.helpers import format_size
         assert "GB" in format_size(2 * 1024 * 1024 * 1024)
 
     def test_truncate_path(self):
-        from app_trace_cleaner.utils.helpers import truncate_path
+        from tracezero.utils.helpers import truncate_path
         long_path = "C:\\Users\\User\\AppData\\Local\\SomeApp\\Cache\\subdir\\file.txt"
         result = truncate_path(long_path, 30)
         assert len(result) <= 30
@@ -113,7 +113,7 @@ class TestRiskAnalyzer:
     """Test risk classification logic."""
 
     def setup_method(self):
-        from app_trace_cleaner.analyzer.risk_analyzer import RiskAnalyzer
+        from tracezero.analyzer.risk_analyzer import RiskAnalyzer
         self.analyzer = RiskAnalyzer(installed_app_names={"chromium", "firefox"})
 
     def test_cache_file_classified(self):
@@ -164,7 +164,7 @@ class TestDatabase:
 
     def setup_method(self):
         """Use an in-memory database for tests."""
-        from app_trace_cleaner.database.db_manager import DatabaseManager
+        from tracezero.database.db_manager import DatabaseManager
         import tempfile
         self.tmp_dir = Path(tempfile.mkdtemp())
         self.db = DatabaseManager(db_path=self.tmp_dir / "test.db")

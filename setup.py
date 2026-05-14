@@ -1,5 +1,5 @@
 """
-setup.py - Package setup for App Trace Cleaner
+setup.py - Package setup for TraceZero
 """
 
 from setuptools import setup, find_packages
@@ -11,9 +11,9 @@ with open("requirements.txt") as f:
     requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
 
 setup(
-    name="app-trace-cleaner",
+    name="tracezero",
     version="1.0.0",
-    author="App Trace Cleaner",
+    author="TraceZero",
     description="Safe, intelligent Windows application leftover cleaner",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -22,7 +22,7 @@ setup(
     install_requires=requirements,
     entry_points={
         "console_scripts": [
-            "app-trace-cleaner=main:main",
+            "tracezero=main:main",
         ],
     },
     classifiers=[

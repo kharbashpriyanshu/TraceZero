@@ -1,6 +1,6 @@
 """
 main.py — TraceZero
-Smart application trace cleaner for Windows.
+Smart TraceZero for Windows.
 
 Usage:
     python main.py
@@ -18,8 +18,8 @@ from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
-from app_trace_cleaner.utils.logger import app_logger
-from app_trace_cleaner.utils.constants import APP_NAME, APP_VERSION
+from tracezero.utils.logger import app_logger
+from tracezero.utils.constants import APP_NAME, APP_VERSION
 
 
 def check_dependencies() -> bool:
@@ -57,7 +57,7 @@ def main():
     )
     app.setFont(QFont("Segoe UI", 10))
 
-    from app_trace_cleaner.ui.main_window import MainWindow
+    from tracezero.ui.main_window import MainWindow
     window = MainWindow()
     window.show()
 

@@ -1,5 +1,5 @@
 ; AppTraceCleaner.spec
-; PyInstaller spec file for packaging App Trace Cleaner as a standalone EXE
+; PyInstaller spec file for packaging TraceZero as a standalone EXE
 ;
 ; Usage:
 ;   pyinstaller AppTraceCleaner.spec
@@ -44,7 +44,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='AppTraceCleaner',
+    name='TraceZero',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
