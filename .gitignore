@@ -1,0 +1,42 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# PyInstaller
+*.spec.bak
+dist/AppTraceCleaner.exe
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# TraceZero app data (user-specific, not committed)
+*.db
+*.log
+*.log.*
+
+# Windows
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# pytest
+.pytest_cache/
+__pytest_cache__/
+htmlcov/
+.coverage
