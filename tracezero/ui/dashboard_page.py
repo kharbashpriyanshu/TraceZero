@@ -6,7 +6,7 @@ Premium dashboard with Carbon Violet theme + light/dark support.
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QFrame, QGridLayout, QSizePolicy,
-    QGraphicsDropShadowEffect,
+    QGraphicsDropShadowEffect, QScrollArea
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QFont, QColor
@@ -210,13 +210,25 @@ class DashboardPage(QWidget):
         left.addWidget(self.sub_lbl)
         hero_row.addLayout(left, 1)
 
+        btn_col = QVBoxLayout()
+        btn_col.setSpacing(12)
+        
         self.scan_btn = QPushButton("  ⚡  Start Scan")
         self.scan_btn.setObjectName("btn_primary")
         self.scan_btn.setFixedSize(170, 50)
         self.scan_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.scan_btn.setStyleSheet(self._build_scan_btn_style(p))
         self.scan_btn.clicked.connect(self.scan_requested.emit)
-        hero_row.addWidget(self.scan_btn, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        btn_col.addWidget(self.scan_btn)
+        
+        self.boost_btn = QPushButton("  🚀  Quick Boost")
+        self.boost_btn.setObjectName("btn_secondary")
+        self.boost_btn.setFixedSize(170, 42)
+        self.boost_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.boost_btn.clicked.connect(self._run_quick_boost)
+        btn_col.addWidget(self.boost_btn)
+
+        hero_row.addLayout(btn_col)
         outer.addWidget(self.hero)
 
         # ── Scroll body ───────────────────────────────────────
@@ -360,3 +372,33 @@ class DashboardPage(QWidget):
     def update_scan_results(self, item_count: int, total_size: int):
         self.card_items.set_value(str(item_count))
         self._refresh_stats()
+
+    # ── Boost Action ──────────────────────────────────────────
+    def _run_quick_boost(self):
+        from tracezero.utils.pc_boost import run_pc_boost
+        from tracezero.utils.helpers import format_size
+        
+        self.boost_btn.setText("  ⏳  Boosting...")
+        self.boost_btn.setEnabled(False)
+        
+        import threading
+        def worker():
+            stats = run_pc_boost()
+            from PyQt6.QtCore import QTimer
+            QTimer.singleShot(0, lambda: self._on_boost_done(stats))
+            
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_boost_done(self, stats):
+        from tracezero.utils.helpers import format_size
+        from PyQt6.QtWidgets import QMessageBox
+        self.boost_btn.setText("  🚀  Quick Boost")
+        self.boost_btn.setEnabled(True)
+        
+        msg = f"PC Boost Complete! 🚀\n\n"
+        if stats['recycle_bin_emptied']:
+            msg += "• Recycle Bin emptied\n"
+        msg += f"• Cleared {stats['temp_files_deleted']} temp files\n"
+        msg += f"• Freed {format_size(stats['temp_bytes_freed'])} of space"
+        
+        QMessageBox.information(self, "Boost Successful", msg)

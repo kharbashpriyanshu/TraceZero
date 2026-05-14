@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import styles from './Navbar.module.css'
 
+import logoImg from '../assets/logo.png'
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -17,8 +19,7 @@ export default function Navbar() {
     <nav className={`${styles.nav} ${scrolled ? styles.scrolled : ''}`}>
       <div className={styles.inner}>
         <a href="#" className={styles.logo}>
-          <span className={styles.logoIcon}>⚡</span>
-          Trace<strong>Zero</strong>
+          <img src={logoImg} alt="TraceZero Logo" className={styles.logoImg} style={{ height: '32px', width: 'auto' }} />
         </a>
 
         <ul className={styles.links}>

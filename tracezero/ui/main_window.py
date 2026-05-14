@@ -16,20 +16,20 @@ from PyQt6.QtWidgets import (
     QLabel, QPushButton, QFrame, QStackedWidget,
     QStatusBar, QMessageBox, QSizePolicy,
 )
-from PyQt6.QtCore import Qt, pyqtSlot, QTimer, QSize
-from PyQt6.QtGui import QFont, QColor, QPalette, QLinearGradient, QPixmap, QPainter
+from PyQt6.QtCore import Qt, pyqtSlot, QTimer, QSize, QUrl
+from PyQt6.QtGui import QFont, QColor, QPalette, QLinearGradient, QPixmap, QPainter, QDesktopServices, QIcon
 
 from tracezero.ui.dashboard_page import DashboardPage
 from tracezero.ui.scan_page import ScanPage
 from tracezero.ui.history_page import HistoryPage
 from tracezero.ui.settings_page import SettingsPage
+from tracezero.ui.startup_page import StartupPage
 from tracezero.ui.styles import MAIN_STYLESHEET, ThemeManager
 from tracezero.scanner.scan_engine import ScanEngine
 from tracezero.utils.recycle_bin import RecycleBinManager
 from tracezero.utils.helpers import format_size
 from tracezero.utils.logger import app_logger
 from tracezero.utils.constants import APP_NAME, APP_VERSION, APP_TAGLINE, COLOR_ACCENT
-
 
 # ─────────────────────────────────────────────────────────────
 #  NAV BUTTON
@@ -54,7 +54,6 @@ class NavButton(QPushButton):
         self.style().unpolish(self)
         self.style().polish(self)
 
-
 # ─────────────────────────────────────────────────────────────
 #  MAIN WINDOW
 # ─────────────────────────────────────────────────────────────
@@ -64,6 +63,11 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(f"TraceZero  v{APP_VERSION}")
+        import os
+        from tracezero.utils.constants import APP_DATA_DIR
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'logo.png')
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
         self.setMinimumSize(1120, 700)
         self.resize(1360, 820)
 
@@ -93,10 +97,11 @@ class MainWindow(QMainWindow):
         self.dashboard_page = DashboardPage(self)
         self.scan_page      = ScanPage(self.scan_engine, self)
         self.history_page   = HistoryPage(self)
+        self.startup_page   = StartupPage(self)
         self.settings_page  = SettingsPage(self)
 
         for page in [self.dashboard_page, self.scan_page,
-                     self.history_page, self.settings_page]:
+                     self.history_page, self.startup_page, self.settings_page]:
             self.stack.addWidget(page)
 
         self.status_bar = QStatusBar()
@@ -131,10 +136,12 @@ class MainWindow(QMainWindow):
         )
         name_row.addWidget(icon_lbl)
 
+        p = ThemeManager.palette()
+
         name_lbl = QLabel("TraceZero")
         name_lbl.setStyleSheet(
-            "font-size: 21px; font-weight: 900; "
-            "color: #e6edf3; background: transparent; letter-spacing: -0.8px;"
+            f"font-size: 21px; font-weight: 900; "
+            f"color: {p['t1']}; background: transparent; letter-spacing: -0.8px; border: none;"
         )
         name_row.addWidget(name_lbl)
         name_row.addStretch()
@@ -142,19 +149,30 @@ class MainWindow(QMainWindow):
 
         tagline = QLabel("Smart application trace cleaner")
         tagline.setStyleSheet(
-            "font-size: 10px; color: #4d5566; background: transparent; margin-top: 5px;"
+            f"font-size: 10px; color: {p['t2']}; background: transparent; margin-top: 4px; border: none;"
         )
         tagline.setWordWrap(True)
         ll.addWidget(tagline)
+
+        # Powered by Mart1al credit — links to TraceZero GitHub project
+        credit = QLabel(
+            '<i style="font-size:9px; color:#8876a8;">Powered by '
+            '<a href="https://github.com/kharbashpriyanshu/TraceZero" '
+            'style="color:#7c6fa8; text-decoration:none;">Mart1al</a></i>'
+        )
+        credit.setStyleSheet("background: transparent; border: none; margin-top: 2px;")
+        credit.setTextFormat(Qt.TextFormat.RichText)
+        credit.setOpenExternalLinks(True)
+        ll.addWidget(credit)
 
         # Version pill
         ver_row = QHBoxLayout()
         ver_row.setSpacing(0)
         ver = QLabel(f"v{APP_VERSION}")
         ver.setStyleSheet(
-            f"font-size: 10px; font-weight: 700; color: {COLOR_ACCENT}; "
-            "background: rgba(88,166,255,0.1); border: 1px solid rgba(88,166,255,0.2); "
-            "border-radius: 10px; padding: 2px 8px; margin-top: 7px;"
+            f"font-size: 10px; font-weight: 700; color: {p['accent']}; "
+            f"background: {p['accent']}18; border: 1px solid {p['accent']}33; "
+            "border-radius: 10px; padding: 2px 8px; margin-top: 6px;"
         )
         ver_row.addWidget(ver)
         ver_row.addStretch()
@@ -172,7 +190,8 @@ class MainWindow(QMainWindow):
             ("🏠", "Dashboard",   0),
             ("🔍", "Scan & Clean",1),
             ("📋", "History",     2),
-            ("⚙️", "Settings",    3),
+            ("🚀", "Startup Apps",3),
+            ("⚙️", "Settings",    4),
         ]
         for icon, label, idx in items:
             btn = NavButton(icon, label)
@@ -236,6 +255,8 @@ class MainWindow(QMainWindow):
             self.dashboard_page.apply_theme()
         if hasattr(self.settings_page, 'apply_theme'):
             self.settings_page.apply_theme()
+        if hasattr(self.startup_page, 'apply_theme'):
+            self.startup_page.apply_theme()
         if hasattr(self.scan_page, '_build_ui'):
             # Rebuild scan page UI in-place (clear + rebuild layout)
             old_layout = self.scan_page.layout()
