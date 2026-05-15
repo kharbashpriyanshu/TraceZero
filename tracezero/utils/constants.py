@@ -135,22 +135,22 @@ RISK_COLORS = {
 }
 
 # ─────────────────────────────────────────────
-#  UI THEME COLORS  — Carbon Violet (dark defaults)
+#  UI THEME COLORS  — Windows 11 Blue (dark defaults)
 # ─────────────────────────────────────────────
-COLOR_BG_DARK      = "#0f0e17"
-COLOR_BG_CARD      = "#16151f"
-COLOR_BG_PANEL     = "#1d1c2a"
-COLOR_ACCENT       = "#7c3aed"   # electric violet
-COLOR_ACCENT_GREEN = "#10b981"
-COLOR_ACCENT_RED   = "#ef4444"
-COLOR_ACCENT_ORANGE= "#f59e0b"
-COLOR_TEXT_PRIMARY = "#ede9fe"
-COLOR_TEXT_SECONDARY="#8876a8"
-COLOR_BORDER       = "#2d2a45"
-COLOR_HOVER        = "#23222f"
+COLOR_BG_DARK      = "#111111"
+COLOR_BG_CARD      = "#1c1c1c"
+COLOR_BG_PANEL     = "#242424"
+COLOR_ACCENT       = "#0078d4"   # windows blue
+COLOR_ACCENT_GREEN = "#107c10"
+COLOR_ACCENT_RED   = "#e81123"
+COLOR_ACCENT_ORANGE= "#f7630c"
+COLOR_TEXT_PRIMARY = "#ffffff"
+COLOR_TEXT_SECONDARY="#cccccc"
+COLOR_BORDER       = "#333333"
+COLOR_HOVER        = "#2d2d2d"
 
 # Risk level color map (used in scanner + UI)
-RISK_COLORS = {"Safe": "#10b981", "Review": "#f59e0b", "Risky": "#ef4444"}
+RISK_COLORS = {"Safe": "#107c10", "Review": "#f7630c", "Risky": "#e81123"}
 
 # ─────────────────────────────────────────────
 #  SCANNER CONFIG

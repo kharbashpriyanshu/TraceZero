@@ -120,34 +120,29 @@ class MainWindow(QMainWindow):
         # ── Logo block ────────────────────────────────────────
         logo_w = QWidget()
         logo_w.setStyleSheet("background: transparent;")
-        logo_w.setFixedHeight(120)
         ll = QVBoxLayout(logo_w)
         ll.setContentsMargins(18, 22, 18, 12)
         ll.setSpacing(0)
 
-        # App icon + name row
-        name_row = QHBoxLayout()
-        name_row.setSpacing(10)
+        # App logo image row
+        import os
+        logo_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'assets', 'logo.png'))
+        
+        logo_lbl = QLabel()
+        logo_lbl.setStyleSheet("background: transparent; border: none;")
+        if os.path.exists(logo_path):
+            pixmap = QPixmap(logo_path)
+            # Scale gracefully keeping aspect ratio so it fits perfectly in the sidebar header
+            scaled = pixmap.scaled(180, 75, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            logo_lbl.setPixmap(scaled)
+        else:
+            logo_lbl.setText("⚡ TraceZero")
+            logo_lbl.setStyleSheet(f"font-size: 24px; font-weight: 900; color: {ThemeManager.palette()['t1']}; border: none;")
 
-        icon_lbl = QLabel("⚡")
-        icon_lbl.setStyleSheet(
-            "font-size: 28px; background: transparent;"
-            "color: #4ade80;"
-        )
-        name_row.addWidget(icon_lbl)
-
-        p = ThemeManager.palette()
-
-        name_lbl = QLabel("TraceZero")
-        name_lbl.setStyleSheet(
-            f"font-size: 21px; font-weight: 900; "
-            f"color: {p['t1']}; background: transparent; letter-spacing: -0.8px; border: none;"
-        )
-        name_row.addWidget(name_lbl)
-        name_row.addStretch()
-        ll.addLayout(name_row)
+        ll.addWidget(logo_lbl)
 
         tagline = QLabel("Smart application trace cleaner")
+        p = ThemeManager.palette()
         tagline.setStyleSheet(
             f"font-size: 10px; color: {p['t2']}; background: transparent; margin-top: 4px; border: none;"
         )
@@ -188,7 +183,7 @@ class MainWindow(QMainWindow):
         self.nav_btns: List[NavButton] = []
         items = [
             ("🏠", "Dashboard",   0),
-            ("🔍", "Scan & Clean",1),
+            ("🔍", "Scan && Clean",1),
             ("📋", "History",     2),
             ("🚀", "Startup Apps",3),
             ("⚙️", "Settings",    4),
@@ -257,15 +252,10 @@ class MainWindow(QMainWindow):
             self.settings_page.apply_theme()
         if hasattr(self.startup_page, 'apply_theme'):
             self.startup_page.apply_theme()
-        if hasattr(self.scan_page, '_build_ui'):
-            # Rebuild scan page UI in-place (clear + rebuild layout)
-            old_layout = self.scan_page.layout()
-            if old_layout:
-                while old_layout.count():
-                    item = old_layout.takeAt(0)
-                    if item.widget():
-                        item.widget().deleteLater()
-            self.scan_page._build_ui()
+        if hasattr(self.scan_page, 'apply_theme'):
+            self.scan_page.apply_theme()
+        if hasattr(self.history_page, 'apply_theme'):
+            self.history_page.apply_theme()
         app_logger.info(f"Theme switched to: {ThemeManager.mode()}")
 
     # ── Signals ───────────────────────────────────────────────

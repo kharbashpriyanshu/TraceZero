@@ -97,6 +97,7 @@ class SettingsPage(QWidget):
             QCheckBox::indicator:checked {{
                 background: {p['accent']};
                 border-color: {p['accent']};
+                image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
             }}
             QCheckBox::indicator:hover {{
                 border-color: {p['accent2']};
@@ -358,7 +359,7 @@ class SettingsPage(QWidget):
     def _add_custom_path(self):
         folder = QFileDialog.getExistingDirectory(
             self, "Select Folder to Scan", "C:\\",
-            QFileDialog.Option.ShowDirsOnly
+            QFileDialog.Option.ShowDirsOnly | QFileDialog.Option.DontUseNativeDialog
         )
         if folder:
             cfg.add_custom_path(folder)

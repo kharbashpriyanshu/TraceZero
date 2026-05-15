@@ -20,18 +20,34 @@ def get_startup_apps() -> List[Dict]:
     apps = []
     
     for hkey, subkey in STARTUP_KEYS:
+        approved_subkey = r"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
+        
         try:
             with winreg.OpenKey(hkey, subkey, 0, winreg.KEY_READ) as key:
                 i = 0
                 while True:
                     try:
                         name, value, _ = winreg.EnumValue(key, i)
+                        
+                        # Default is enabled if not found in StartupApproved
+                        enabled = True
+                        try:
+                            with winreg.OpenKey(hkey, approved_subkey, 0, winreg.KEY_READ) as app_key:
+                                bin_val, val_type = winreg.QueryValueEx(app_key, name)
+                                if val_type == winreg.REG_BINARY and len(bin_val) > 0:
+                                    # Even number first byte = Enabled, Odd = Disabled
+                                    if bin_val[0] % 2 != 0:
+                                        enabled = False
+                        except Exception:
+                            pass
+                            
                         apps.append({
                             "name": name,
                             "command": value,
-                            "enabled": True,
+                            "enabled": enabled,
                             "hkey": hkey,
-                            "subkey": subkey
+                            "subkey": subkey,
+                            "approved_subkey": approved_subkey
                         })
                         i += 1
                     except OSError:
@@ -39,12 +55,7 @@ def get_startup_apps() -> List[Dict]:
         except Exception as e:
             app_logger.warning(f"Could not read startup key {subkey}: {e}")
             
-    # Also read "Disabled" keys if we implemented custom tracking, but for now we will 
-    # use a common trick: moving the disabled ones to a "Run_Disabled" key or similar,
-    # or just checking the Task Manager's ApprovedStartupPage list.
-    # To keep it safe and straightforward like PC Manager, we will just read/write from 
-    # a custom "Run_Disabled" registry path if they disable it via TraceZero.
-    
+    # Also support custom Run_Disabled fallback just in case they were moved
     for hkey, subkey in STARTUP_KEYS:
         disabled_subkey = subkey + "_Disabled"
         try:
@@ -58,46 +69,42 @@ def get_startup_apps() -> List[Dict]:
                             "command": value,
                             "enabled": False,
                             "hkey": hkey,
-                            "subkey": subkey # Original subkey
+                            "subkey": subkey,
+                            "approved_subkey": r"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
                         })
                         i += 1
                     except OSError:
                         break
-        except FileNotFoundError:
-            pass # No disabled key exists yet
+        except Exception:
+            pass
             
+    # Sort apps: Enabled first (False evaluates to 0 in sorting), then Disabled, then alphabetically
+    apps.sort(key=lambda x: (not x["enabled"], x["name"].lower()))
     return apps
 
 def toggle_startup_app(app: Dict, enable: bool) -> bool:
     """Enable or disable a startup app."""
     hkey = app["hkey"]
-    orig_subkey = app["subkey"]
-    disabled_subkey = orig_subkey + "_Disabled"
     name = app["name"]
-    command = app["command"]
+    approved_subkey = app["approved_subkey"]
     
     try:
-        if enable:
-            # Move from disabled to enabled
-            with winreg.CreateKey(hkey, orig_subkey) as key:
-                winreg.SetValueEx(key, name, 0, winreg.REG_SZ, command)
-                
+        # Write to StartupApproved/Run
+        with winreg.CreateKey(hkey, approved_subkey) as key:
+            # We need to read the existing binary or create a new one
             try:
-                with winreg.OpenKey(hkey, disabled_subkey, 0, winreg.KEY_SET_VALUE) as dkey:
-                    winreg.DeleteValue(dkey, name)
+                bin_val, val_type = winreg.QueryValueEx(key, name)
+                bin_array = bytearray(bin_val)
             except Exception:
-                pass
-        else:
-            # Move from enabled to disabled
-            with winreg.CreateKey(hkey, disabled_subkey) as key:
-                winreg.SetValueEx(key, name, 0, winreg.REG_SZ, command)
-                
-            try:
-                with winreg.OpenKey(hkey, orig_subkey, 0, winreg.KEY_SET_VALUE) as ekey:
-                    winreg.DeleteValue(ekey, name)
-            except Exception:
-                pass
-                
+                # Default empty 12-byte array if missing
+                # Task manager uses 12 bytes: e.g. 02 00 00 00 00 00 00 00 00 00 00 00
+                bin_array = bytearray([0] * 12)
+            
+            # 0x02 is Enabled, 0x03 is Disabled.
+            bin_array[0] = 0x02 if enable else 0x03
+            
+            winreg.SetValueEx(key, name, 0, winreg.REG_BINARY, bytes(bin_array))
+            
         app_logger.info(f"{'Enabled' if enable else 'Disabled'} startup app: {name}")
         return True
     except Exception as e:

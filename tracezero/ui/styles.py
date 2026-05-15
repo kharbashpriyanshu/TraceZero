@@ -5,23 +5,23 @@ Unique "Carbon Violet" theme with full Dark / Light mode support.
 
 # ── Palette definitions ───────────────────────────────────────
 DARK = {
-    "bg":       "#0f0e17",  "card":    "#16151f",
-    "panel":    "#1d1c2a",  "hover":   "#23222f",
-    "accent":   "#7c3aed",  "accent2": "#a78bfa",
-    "green":    "#10b981",  "red":     "#ef4444",
-    "orange":   "#f59e0b",
-    "t1":       "#ede9fe",  "t2":      "#8876a8",
-    "border":   "#2d2a45",
+    "bg":       "#111111",  "card":    "#1c1c1c",
+    "panel":    "#242424",  "hover":   "#2d2d2d",
+    "accent":   "#0078d4",  "accent2": "#2b88d8",
+    "green":    "#107c10",  "red":     "#e81123",
+    "orange":   "#f7630c",
+    "t1":       "#ffffff",  "t2":      "#cccccc",
+    "border":   "#333333",
 }
 
 LIGHT = {
-    "bg":       "#f7f6fb",  "card":    "#ffffff",
-    "panel":    "#eeeaf8",  "hover":   "#e8e3f5",
-    "accent":   "#6d28d9",  "accent2": "#7c3aed",
-    "green":    "#059669",  "red":     "#dc2626",
-    "orange":   "#d97706",
-    "t1":       "#1a1033",  "t2":      "#6b5e8a",
-    "border":   "#d4cfe8",
+    "bg":       "#f3f3f3",  "card":    "#ffffff",
+    "panel":    "#f9f9f9",  "hover":   "#eeeeee",
+    "accent":   "#005a9e",  "accent2": "#0078d4",
+    "green":    "#107c10",  "red":     "#d13438",
+    "orange":   "#d04a02",
+    "t1":       "#000000",  "t2":      "#555555",
+    "border":   "#e5e5e5",
 }
 
 
@@ -58,9 +58,11 @@ QScrollBar::add-line:horizontal,QScrollBar::sub-line:horizontal {{ width:0; }}
 #sidebar_btn {{
     background:transparent; color:{t['t2']}; border:none;
     padding:10px 14px; text-align:left; border-radius:8px;
-    font-size:13px; font-weight:500; margin:2px 10px;
+    font-size:13px; font-weight:500; margin:2px 12px;
 }}
-#sidebar_btn:hover {{ background:rgba(124,58,237,0.10); color:{t['t1']}; }}
+#sidebar_btn:hover {{ 
+    background:{t['hover']}; color:{t['t1']}; 
+}}
 #sidebar_btn_active {{
     background: qlineargradient(x1:0,y1:0,x2:1,y2:0,
         stop:0 {t['accent']}28, stop:1 {t['accent']}08);
@@ -68,7 +70,7 @@ QScrollBar::add-line:horizontal,QScrollBar::sub-line:horizontal {{ width:0; }}
     border-left:3px solid {t['accent']};
     border-top-right-radius:8px; border-bottom-right-radius:8px;
     border-top-left-radius:0; border-bottom-left-radius:0;
-    padding:10px 11px; margin:2px 0; font-weight:700;
+    padding:10px 21px; margin:2px 0; font-weight:700;
 }}
 
 #card {{
@@ -176,7 +178,10 @@ QCheckBox::indicator {{
     width:15px; height:15px; border-radius:4px;
     border:1.5px solid {t['border']}; background:transparent;
 }}
-QCheckBox::indicator:checked {{ background:{t['accent']}; border-color:{t['accent']}; }}
+QCheckBox::indicator:checked {{
+    background:{t['accent']}; border-color:{t['accent']};
+    image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+}}
 QCheckBox::indicator:hover {{ border-color:{t['accent']}; }}
 
 QComboBox {{

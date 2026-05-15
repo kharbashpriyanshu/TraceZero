@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QFrame, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView
+    QFrame, QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
+    QMenu, QMessageBox, QComboBox
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QBrush, QFont
@@ -70,6 +71,11 @@ class StartupPage(QWidget):
                 padding: 4px;
             }}
         """)
+        
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self._show_context_menu)
+        self.table.doubleClicked.connect(self._toggle_selected)
+
         self._layout.addWidget(self.table)
 
         # Action Bar
@@ -114,11 +120,128 @@ class StartupPage(QWidget):
             cmd.setForeground(QBrush(QColor(p['t2'])))
             self.table.setItem(row, 1, cmd)
             
-            status_text = "Enabled" if app["enabled"] else "Disabled"
-            status = QTableWidgetItem(status_text)
-            status.setForeground(QBrush(QColor("#3fb950" if app["enabled"] else p['t2'])))
-            status.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
-            self.table.setItem(row, 2, status)
+            combo = QComboBox()
+            combo.addItems(["Enabled", "Disabled"])
+            combo.setCurrentIndex(0 if app["enabled"] else 1)
+            combo.currentIndexChanged.connect(lambda idx, r=row, c=combo: self._on_status_combo_changed(r, c))
+            combo.setStyleSheet(f"""
+                QComboBox {{
+                    background: {p['accent']}15;
+                    color: {p['green'] if app["enabled"] else p['t2']};
+                    font-weight: 800;
+                    border: 1px solid {p['accent']}30;
+                    border-radius: 12px;
+                    padding: 4px 12px;
+                    min-width: 85px;
+                }}
+                QComboBox:hover {{
+                    background: {p['accent']}25;
+                    border: 1px solid {p['accent']}50;
+                }}
+                QComboBox::drop-down {{
+                    border: none; 
+                    width: 20px;
+                }}
+                QComboBox::down-arrow {{
+                    image: none; 
+                    /* Custom arrow simulation */
+                }}
+                QComboBox QAbstractItemView {{
+                    background: {p['card']};
+                    color: {p['t1']};
+                    border: 1px solid {p['border']};
+                    border-radius: 8px;
+                    selection-background-color: {p['accent']}40;
+                    outline: none;
+                    padding: 4px;
+                }}
+                QComboBox QAbstractItemView::item {{
+                    padding: 8px 12px;
+                    border-radius: 4px;
+                }}
+            """)
+            self.table.setCellWidget(row, 2, combo)
+
+    def _on_status_combo_changed(self, row, combo):
+        app = self.apps[row]
+        new_state = (combo.currentIndex() == 0)
+        
+        if new_state == app["enabled"]:
+            return
+            
+        success = toggle_startup_app(app, new_state)
+        p = ThemeManager.palette()
+        
+        if success:
+            app["enabled"] = new_state
+            combo.setStyleSheet(f"""
+                QComboBox {{
+                    background: {p['accent']}15;
+                    color: {p['green'] if new_state else p['t2']};
+                    font-weight: 800;
+                    border: 1px solid {p['accent']}30;
+                    border-radius: 12px;
+                    padding: 4px 12px;
+                    min-width: 85px;
+                }}
+                QComboBox:hover {{
+                    background: {p['accent']}25;
+                    border: 1px solid {p['accent']}50;
+                }}
+                QComboBox::drop-down {{
+                    border: none; 
+                    width: 20px;
+                }}
+                QComboBox::down-arrow {{
+                    image: none; 
+                }}
+                QComboBox QAbstractItemView {{
+                    background: {p['card']};
+                    color: {p['t1']};
+                    border: 1px solid {p['border']};
+                    border-radius: 8px;
+                    selection-background-color: {p['accent']}40;
+                    outline: none;
+                    padding: 4px;
+                }}
+                QComboBox QAbstractItemView::item {{
+                    padding: 8px 12px;
+                    border-radius: 4px;
+                }}
+            """)
+            action_text = "enabled" if new_state else "disabled"
+            QMessageBox.information(
+                self,
+                "Success",
+                f"Successfully {action_text} startup app:\n{app['name']}"
+            )
+        else:
+            combo.blockSignals(True)
+            combo.setCurrentIndex(0 if app["enabled"] else 1)
+            combo.blockSignals(False)
+            
+            QMessageBox.critical(
+                self, 
+                "Permission Denied",
+                f"Failed to {'enable' if new_state else 'disable'} {app['name']}.\n\n"
+                "Please run TraceZero as Administrator to manage system-wide startup applications."
+            )
+
+    def _show_context_menu(self, pos):
+        item = self.table.itemAt(pos)
+        if not item:
+            return
+            
+        row = item.row()
+        app = self.apps[row]
+        menu = QMenu(self)
+        
+        action_text = "Disable" if app["enabled"] else "Enable"
+        toggle_action = menu.addAction(f"{action_text} Startup App")
+        
+        action = menu.exec(self.table.viewport().mapToGlobal(pos))
+        if action == toggle_action:
+            self._toggle_selected()
 
     def _toggle_selected(self):
         selected = self.table.selectedItems()
@@ -132,6 +255,19 @@ class StartupPage(QWidget):
         success = toggle_startup_app(app, new_state)
         if success:
             self.load_data()
+            action_text = "enabled" if new_state else "disabled"
+            QMessageBox.information(
+                self,
+                "Success",
+                f"Successfully {action_text} startup app:\n{app['name']}"
+            )
+        else:
+            QMessageBox.critical(
+                self, 
+                "Permission Denied",
+                f"Failed to {'enable' if new_state else 'disable'} {app['name']}.\n\n"
+                "Please run TraceZero as Administrator to manage system-wide startup applications."
+            )
 
     def apply_theme(self):
         # Full clear and rebuild

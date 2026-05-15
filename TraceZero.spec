@@ -13,6 +13,7 @@ a = Analysis(
     datas=[
         # Include the entire tracezero package
         ('tracezero', 'tracezero'),
+        ('assets', 'assets'),
     ],
     hiddenimports=[
         # PyQt6

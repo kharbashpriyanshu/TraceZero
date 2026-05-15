@@ -91,9 +91,11 @@ class ScanPage(QWidget):
 
     # ── UI Build ──────────────────────────────────────────────
     def _build_ui(self):
-        root = QVBoxLayout(self)
-        root.setContentsMargins(0, 0, 0, 0)
-        root.setSpacing(0)
+        root = self.layout()
+        if root is None:
+            root = QVBoxLayout(self)
+            root.setContentsMargins(0, 0, 0, 0)
+            root.setSpacing(0)
 
         # ── Top bar (header + controls) ───────────────────────
         p = ThemeManager.palette()
@@ -524,3 +526,19 @@ class ScanPage(QWidget):
 
         if dlg.exec() == QMessageBox.StandardButton.Yes:
             self.delete_requested.emit(selected)
+
+    # ── Theme ─────────────────────────────────────────────────
+    def apply_theme(self):
+        root = self.layout()
+        if root:
+            self._clear_layout(root)
+        self._build_ui()
+
+    def _clear_layout(self, layout):
+        while layout.count():
+            item = layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+            elif item.layout():
+                self._clear_layout(item.layout())
+                item.layout().deleteLater()

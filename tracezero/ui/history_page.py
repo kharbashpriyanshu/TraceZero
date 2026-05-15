@@ -18,6 +18,7 @@ from PyQt6.QtGui import QColor, QBrush, QFont
 
 from tracezero.database.db_manager import get_db
 from tracezero.utils.helpers import format_size
+from tracezero.ui.styles import ThemeManager
 
 
 class HistoryPage(QWidget):
@@ -37,12 +38,13 @@ class HistoryPage(QWidget):
         # ── Header ───────────────────────────────────────────────
         header = QHBoxLayout()
 
+        p = ThemeManager.palette()
         title_col = QVBoxLayout()
         title = QLabel("History")
-        title.setStyleSheet("font-size: 24px; font-weight: 800; color: #e6edf3; background: transparent;")
+        title.setStyleSheet(f"font-size: 24px; font-weight: 800; color: {p['t1']}; background: transparent;")
         title_col.addWidget(title)
         subtitle = QLabel("View past scan sessions and deletion history")
-        subtitle.setStyleSheet("font-size: 12px; color: #8b949e; background: transparent;")
+        subtitle.setStyleSheet(f"font-size: 12px; color: {p['t2']}; background: transparent;")
         title_col.addWidget(subtitle)
 
         header.addLayout(title_col)
@@ -109,7 +111,7 @@ class HistoryPage(QWidget):
 
         # ── Stats Footer ──────────────────────────────────────────
         self.stats_label = QLabel("")
-        self.stats_label.setStyleSheet("font-size: 12px; color: #8b949e; background: transparent;")
+        self.stats_label.setStyleSheet(f"font-size: 12px; color: {p['t2']}; background: transparent;")
         layout.addWidget(self.stats_label)
 
     def _configure_table(self, table: QTableWidget):
@@ -129,11 +131,12 @@ class HistoryPage(QWidget):
     def _load_scan_history(self):
         history = self.db.get_scan_history(limit=100)
         self.scan_table.setRowCount(0)
+        p = ThemeManager.palette()
 
         STATUS_COLORS = {
-            "completed": "#3fb950",
-            "cancelled": "#d29922",
-            "running": "#4ade80",
+            "completed": p['green'],
+            "cancelled": p['orange'],
+            "running": p['accent'],
         }
 
         for record in history:
@@ -146,16 +149,16 @@ class HistoryPage(QWidget):
             self.scan_table.setItem(row, 2, QTableWidgetItem(record["finished_at"]))
 
             items_item = QTableWidgetItem(str(record["total_items"]))
-            items_item.setForeground(QBrush(QColor("#4ade80")))
+            items_item.setForeground(QBrush(QColor(p['t1'])))
             self.scan_table.setItem(row, 3, items_item)
 
             size_item = QTableWidgetItem(format_size(int(record["total_size"])))
-            size_item.setForeground(QBrush(QColor("#3fb950")))
+            size_item.setForeground(QBrush(QColor(p['t2'])))
             self.scan_table.setItem(row, 4, size_item)
 
             status = record["status"]
             status_item = QTableWidgetItem(status.title())
-            color = STATUS_COLORS.get(status, "#8b949e")
+            color = STATUS_COLORS.get(status, p['t2'])
             status_item.setForeground(QBrush(QColor(color)))
             status_item.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
             self.scan_table.setItem(row, 5, status_item)
@@ -163,11 +166,12 @@ class HistoryPage(QWidget):
     def _load_deletion_history(self):
         history = self.db.get_deletion_history(limit=200)
         self.del_table.setRowCount(0)
+        p = ThemeManager.palette()
 
         RISK_COLORS = {
-            "Safe": "#3fb950",
-            "Review": "#d29922",
-            "Risky": "#f85149",
+            "Safe": p['green'],
+            "Review": p['orange'],
+            "Risky": p['red'],
         }
 
         for record in history:
@@ -182,12 +186,12 @@ class HistoryPage(QWidget):
             self.del_table.setItem(row, 2, QTableWidgetItem(record.get("category", "")))
 
             size_item = QTableWidgetItem(format_size(int(record.get("size_bytes", 0))))
-            size_item.setForeground(QBrush(QColor("#4ade80")))
+            size_item.setForeground(QBrush(QColor(p['t2'])))
             self.del_table.setItem(row, 3, size_item)
 
             risk = record.get("risk_level", "")
             risk_item = QTableWidgetItem(risk)
-            risk_item.setForeground(QBrush(QColor(RISK_COLORS.get(risk, "#8b949e"))))
+            risk_item.setForeground(QBrush(QColor(RISK_COLORS.get(risk, p['t2']))))
             self.del_table.setItem(row, 4, risk_item)
 
             self.del_table.setItem(row, 5, QTableWidgetItem(record["deleted_at"]))
@@ -199,3 +203,20 @@ class HistoryPage(QWidget):
             f"Total cleaned items: {stats['total_deleted_items']}  •  "
             f"Total space freed: {format_size(int(stats['total_space_freed']))}"
         )
+
+    def apply_theme(self):
+        """Rebuild the page completely to apply new theme colors."""
+        root = self.layout()
+        if root:
+            self._clear_layout(root)
+        self._build_ui()
+        self.refresh()
+
+    def _clear_layout(self, layout):
+        while layout.count():
+            item = layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+            elif item.layout():
+                self._clear_layout(item.layout())
+                item.layout().deleteLater()
