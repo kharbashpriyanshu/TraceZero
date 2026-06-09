@@ -20,6 +20,7 @@ from tracezero.registry.registry_reader import RegistryReader
 from tracezero.registry.package_managers import PackageManagerDetector
 from tracezero.scanner.file_scanner import FileScanner
 from tracezero.scanner.browser_scanner import BrowserScanner
+from tracezero.scanner.windows_deep_scanner import WindowsDeepScanner
 from tracezero.analyzer.risk_analyzer import RiskAnalyzer
 from tracezero.database.db_manager import get_db
 from tracezero.utils.logger import app_logger
@@ -187,6 +188,18 @@ class ScanEngine:
                     self.on_item_found(item)
 
             self._emit_status(f"Browsers: {len(browser_results)} artifacts found")
+
+            # ── Step 5c: Windows Deep OS Scan ──────────────────────
+            self._emit_status("🔍 Scanning deep OS artifacts (Prefetch/Update Cache)...")
+            deep_scanner = WindowsDeepScanner()
+            deep_results = deep_scanner.scan()
+            
+            for item in deep_results:
+                self._results.append(item)
+                if self.on_item_found:
+                    self.on_item_found(item)
+
+            self._emit_status(f"Deep OS: {len(deep_results)} artifacts found")
 
             # ── Step 6: Persist results ────────────────────────────
             total_size = sum(item.get("size_bytes", 0) for item in self._results)

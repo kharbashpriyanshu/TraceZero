@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
     QLabel, QPushButton, QFrame, QStackedWidget,
     QStatusBar, QMessageBox, QSizePolicy,
 )
-from PyQt6.QtCore import Qt, pyqtSlot, QTimer, QSize, QUrl
+from PyQt6.QtCore import Qt, pyqtSlot, QTimer, QSize, QUrl, QThread, pyqtSignal
 from PyQt6.QtGui import QFont, QColor, QPalette, QLinearGradient, QPixmap, QPainter, QDesktopServices, QIcon
 
 from tracezero.ui.dashboard_page import DashboardPage
@@ -24,6 +24,7 @@ from tracezero.ui.scan_page import ScanPage
 from tracezero.ui.history_page import HistoryPage
 from tracezero.ui.settings_page import SettingsPage
 from tracezero.ui.startup_page import StartupPage
+from tracezero.ui.duplicate_page import DuplicatePage
 from tracezero.ui.styles import MAIN_STYLESHEET, ThemeManager
 from tracezero.scanner.scan_engine import ScanEngine
 from tracezero.utils.recycle_bin import RecycleBinManager
@@ -53,6 +54,34 @@ class NavButton(QPushButton):
         self.setObjectName("sidebar_btn_active" if active else "sidebar_btn")
         self.style().unpolish(self)
         self.style().polish(self)
+
+# ─────────────────────────────────────────────────────────────
+#  DELETION THREAD
+# ─────────────────────────────────────────────────────────────
+class DeletionThread(QThread):
+    progress = pyqtSignal(str)
+    item_deleted = pyqtSignal(dict, bool)
+    finished_deleting = pyqtSignal(list, list)
+
+    def __init__(self, recycle_manager, items):
+        super().__init__()
+        self.recycle_manager = recycle_manager
+        self.items = items
+
+    def run(self):
+        successful = []
+        failed = []
+        for i, item in enumerate(self.items):
+            self.progress.emit(f"Sending to Recycle Bin... ({i+1}/{len(self.items)})")
+            # delete_items returns (successful_paths, failed_paths_with_reasons)
+            succ, fld = self.recycle_manager.delete_items([item])
+            if succ:
+                successful.extend(succ)
+                self.item_deleted.emit(item, True)
+            if fld:
+                failed.extend(fld)
+                self.item_deleted.emit(item, False)
+        self.finished_deleting.emit(successful, failed)
 
 # ─────────────────────────────────────────────────────────────
 #  MAIN WINDOW
@@ -98,10 +127,12 @@ class MainWindow(QMainWindow):
         self.scan_page      = ScanPage(self.scan_engine, self)
         self.history_page   = HistoryPage(self)
         self.startup_page   = StartupPage(self)
+        self.duplicate_page = DuplicatePage(self)
         self.settings_page  = SettingsPage(self)
 
         for page in [self.dashboard_page, self.scan_page,
-                     self.history_page, self.startup_page, self.settings_page]:
+                     self.history_page, self.startup_page, 
+                     self.duplicate_page, self.settings_page]:
             self.stack.addWidget(page)
 
         self.status_bar = QStatusBar()
@@ -186,7 +217,8 @@ class MainWindow(QMainWindow):
             ("🔍", "Scan && Clean",1),
             ("📋", "History",     2),
             ("🚀", "Startup Apps",3),
-            ("⚙️", "Settings",    4),
+            ("👯", "Duplicates",  4),
+            ("⚙️", "Settings",    5),
         ]
         for icon, label, idx in items:
             btn = NavButton(icon, label)
@@ -252,6 +284,8 @@ class MainWindow(QMainWindow):
             self.settings_page.apply_theme()
         if hasattr(self.startup_page, 'apply_theme'):
             self.startup_page.apply_theme()
+        if hasattr(self.duplicate_page, 'apply_theme'):
+            self.duplicate_page.apply_theme()
         if hasattr(self.scan_page, 'apply_theme'):
             self.scan_page.apply_theme()
         if hasattr(self.history_page, 'apply_theme'):
@@ -279,27 +313,42 @@ class MainWindow(QMainWindow):
     def _handle_deletion(self, items: List[Dict]):
         if not items:
             return
+            
+        self.scan_page.btn_delete.setEnabled(False)
         self._set_status(f"Sending {len(items)} items to Recycle Bin…")
-        try:
-            self.recycle_manager.session_id = self.scan_engine._session_id
-            successful, failed = self.recycle_manager.delete_items(items)
-            msg = f"✅  Cleaned {len(successful)} item(s)"
-            if failed:
-                msg += f"   ⚠️  {len(failed)} failed"
-            self._set_status(msg)
+        
+        self.recycle_manager.session_id = self.scan_engine._session_id
+        
+        self.deletion_thread = DeletionThread(self.recycle_manager, items)
+        self.deletion_thread.progress.connect(self._set_status)
+        self.deletion_thread.item_deleted.connect(self._on_item_deleted)
+        self.deletion_thread.finished_deleting.connect(self._on_deletion_finished)
+        self.deletion_thread.start()
 
-            if successful:
-                QMessageBox.information(
-                    self, "Cleanup Complete",
-                    f"Sent {len(successful)} item(s) to the Recycle Bin.\n\n"
-                    "You can restore them from the Windows Recycle Bin anytime.\n\n"
-                    + (f"⚠️ {len(failed)} item(s) could not be removed:\n"
-                       + "\n".join(f[:80] for f in failed[:5]) if failed else ""),
-                )
-        except Exception as e:
-            app_logger.error(f"Deletion error: {e}", exc_info=True)
-            QMessageBox.critical(self, "Deletion Failed",
-                                 f"An error occurred:\n\n{e}\n\nEnsure send2trash is installed.")
+    @pyqtSlot(dict, bool)
+    def _on_item_deleted(self, item: Dict, success: bool):
+        if success:
+            self.scan_page.remove_deleted_item(item)
+
+    @pyqtSlot(list, list)
+    def _on_deletion_finished(self, successful: list, failed: list):
+        msg = f"✅  Cleaned {len(successful)} item(s)"
+        if failed:
+            msg += f"   ⚠️  {len(failed)} failed"
+        self._set_status(msg)
+
+        if successful or failed:
+            from tracezero.utils.helpers import truncate_path
+            formatted_failed = "\n".join(truncate_path(f, 90) for f in failed[:6])
+            
+            QMessageBox.information(
+                self, "Cleanup Complete",
+                f"Sent {len(successful)} item(s) to the Recycle Bin.\n\n"
+                "You can restore them from the Windows Recycle Bin anytime.\n\n"
+                + (f"⚠️ {len(failed)} item(s) could not be removed:\n{formatted_failed}" if failed else ""),
+            )
+        
+        self.scan_page.btn_delete.setEnabled(True)
 
     def _set_status(self, msg: str):
         self.status_bar.showMessage(msg)

@@ -172,10 +172,11 @@ python -m pytest tests/ -v
 
 ## 🔄 Roadmap
 
+- [x] Browser cache cleaning (Chrome, Firefox, Edge, Brave)
+- [x] Startup apps manager
+- [x] Duplicate file finder
+- [x] Windows Core Cleanup (Deep OS cache: Prefetch, Windows Update)
 - [ ] Scheduled automatic scans
-- [ ] Browser cache cleaning (Chrome, Firefox, Edge)
-- [ ] Startup entry manager
-- [ ] Duplicate file finder
 - [ ] Disk space treemap view
 - [ ] Windows context menu integration
 - [ ] Multi-language support

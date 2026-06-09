@@ -527,6 +527,22 @@ class ScanPage(QWidget):
         if dlg.exec() == QMessageBox.StandardButton.Yes:
             self.delete_requested.emit(selected)
 
+    @pyqtSlot(dict)
+    def remove_deleted_item(self, item: Dict):
+        """Called by MainWindow when an item is successfully deleted to remove it from UI."""
+        if item in self._all_items:
+            self._all_items.remove(item)
+        if item in self._filtered:
+            self._filtered.remove(item)
+            
+        for row in range(self.table.rowCount()):
+            data = self._row_data.get(row)
+            if data == item:
+                self.table.setRowHidden(row, True)
+                break
+                
+        self._update_stats()
+
     # ── Theme ─────────────────────────────────────────────────
     def apply_theme(self):
         root = self.layout()

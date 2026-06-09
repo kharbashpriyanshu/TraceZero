@@ -154,9 +154,19 @@ class RecycleBinManager:
             return True
 
         path = Path(path_str)
+        path_lower = str(path).lower()
+
+        # Check for Deep OS items bypass
+        is_deep_os = False
+        allowed_exceptions = [
+            "c:\\windows\\prefetch",
+            "c:\\windows\\softwaredistribution\\download"
+        ]
+        if any(path_lower.startswith(ex) for ex in allowed_exceptions):
+            is_deep_os = True
 
         # Check path safety
-        if not is_path_safe(path):
+        if not is_deep_os and not is_path_safe(path):
             app_logger.warning(f"BLOCKED (unsafe path): {path_str}")
             return False
 
@@ -171,15 +181,15 @@ class RecycleBinManager:
             return False
 
         # Block Windows directory paths as extra safety net
-        path_lower = str(path).lower()
-        blocked_roots = [
-            "c:\\windows", "c:\\system32", "c:\\recovery",
-            "c:\\boot", "c:\\program files\\windows",
-        ]
-        for blocked in blocked_roots:
-            if path_lower.startswith(blocked):
-                app_logger.warning(f"BLOCKED (system path): {path_str}")
-                return False
+        if not is_deep_os:
+            blocked_roots = [
+                "c:\\windows", "c:\\system32", "c:\\recovery",
+                "c:\\boot", "c:\\program files\\windows",
+            ]
+            for blocked in blocked_roots:
+                if path_lower.startswith(blocked):
+                    app_logger.warning(f"BLOCKED (system path): {path_str}")
+                    return False
 
         return True
 
@@ -210,8 +220,26 @@ class RecycleBinManager:
             # Strip the HKCU\ prefix
             key_path = path_str[len("HKCU\\"):]
 
-            # Try to delete
-            winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
+            def delete_subkeys(hkey, current_path):
+                try:
+                    open_key = winreg.OpenKey(hkey, current_path, 0, winreg.KEY_ALL_ACCESS)
+                except OSError:
+                    return
+                
+                try:
+                    info = winreg.QueryInfoKey(open_key)
+                    for _ in range(info[0]):
+                        try:
+                            subkey_name = winreg.EnumKey(open_key, 0)
+                            delete_subkeys(open_key, subkey_name)
+                        except OSError:
+                            pass
+                finally:
+                    winreg.CloseKey(open_key)
+                
+                winreg.DeleteKey(hkey, current_path)
+
+            delete_subkeys(winreg.HKEY_CURRENT_USER, key_path)
             app_logger.info(f"✅ Registry key deleted: {path_str}")
             return True
 
