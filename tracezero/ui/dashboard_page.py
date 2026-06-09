@@ -228,6 +228,13 @@ class DashboardPage(QWidget):
         self.boost_btn.clicked.connect(self._run_quick_boost)
         btn_col.addWidget(self.boost_btn)
 
+        self.privacy_btn = QPushButton("  🕵️  Privacy Sweep")
+        self.privacy_btn.setObjectName("btn_secondary")
+        self.privacy_btn.setFixedSize(170, 42)
+        self.privacy_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.privacy_btn.clicked.connect(self._run_privacy_sweep)
+        btn_col.addWidget(self.privacy_btn)
+
         hero_row.addLayout(btn_col)
         outer.addWidget(self.hero)
 
@@ -402,3 +409,37 @@ class DashboardPage(QWidget):
         msg += f"• Freed {format_size(stats['temp_bytes_freed'])} of space"
         
         QMessageBox.information(self, "Boost Successful", msg)
+
+    # ── Privacy Sweep ─────────────────────────────────────────
+    def _run_privacy_sweep(self):
+        from tracezero.utils.network_cleaner import NetworkCleaner
+        from PyQt6.QtWidgets import QMessageBox
+        import threading
+        
+        self.privacy_btn.setText("  ⏳  Sweeping...")
+        self.privacy_btn.setEnabled(False)
+
+        def worker():
+            success = NetworkCleaner.flush_dns()
+            from PyQt6.QtCore import QTimer
+            QTimer.singleShot(0, lambda: self._on_privacy_done(success))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_privacy_done(self, success):
+        from PyQt6.QtWidgets import QMessageBox
+        self.privacy_btn.setText("  🕵️  Privacy Sweep")
+        self.privacy_btn.setEnabled(True)
+
+        if success:
+            QMessageBox.information(
+                self, "Privacy Sweep Complete",
+                "🕵️  Network traces and DNS cache have been flushed!\n\n"
+                "Incognito tracking and domain lookup traces are now cleared. "
+                "Run a full 'Start Scan' to also wipe your browser cookies and caches."
+            )
+        else:
+            QMessageBox.warning(
+                self, "Privacy Sweep Failed",
+                "Failed to flush DNS cache. You may need to run TraceZero as Administrator."
+            )

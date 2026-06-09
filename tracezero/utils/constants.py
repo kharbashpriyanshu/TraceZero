@@ -92,6 +92,13 @@ SCAN_PATHS = {
     ],
 }
 
+BROWSER_PATHS = {
+    "Chrome": USER_HOME / "AppData" / "Local" / "Google" / "Chrome" / "User Data",
+    "Edge": USER_HOME / "AppData" / "Local" / "Microsoft" / "Edge" / "User Data",
+    "Brave": USER_HOME / "AppData" / "Local" / "BraveSoftware" / "Brave-Browser" / "User Data",
+    "Firefox": USER_HOME / "AppData" / "Roaming" / "Mozilla" / "Firefox" / "Profiles",
+}
+
 REGISTRY_SCAN_PATHS = {
     "uninstall_hklm":     r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
     "uninstall_hklm_wow": r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",

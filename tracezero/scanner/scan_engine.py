@@ -19,6 +19,7 @@ from typing import List, Dict, Callable, Optional
 from tracezero.registry.registry_reader import RegistryReader
 from tracezero.registry.package_managers import PackageManagerDetector
 from tracezero.scanner.file_scanner import FileScanner
+from tracezero.scanner.browser_scanner import BrowserScanner
 from tracezero.analyzer.risk_analyzer import RiskAnalyzer
 from tracezero.database.db_manager import get_db
 from tracezero.utils.logger import app_logger
@@ -174,6 +175,18 @@ class ScanEngine:
                 custom = []
 
             file_results = self._file_scanner.scan(custom_paths=custom)
+
+            # ── Step 5b: Browser Privacy Scan ──────────────────────
+            self._emit_status("🔍 Scanning browser privacy artifacts...")
+            browser_scanner = BrowserScanner()
+            browser_results = browser_scanner.scan()
+            
+            for item in browser_results:
+                self._results.append(item)
+                if self.on_item_found:
+                    self.on_item_found(item)
+
+            self._emit_status(f"Browsers: {len(browser_results)} artifacts found")
 
             # ── Step 6: Persist results ────────────────────────────
             total_size = sum(item.get("size_bytes", 0) for item in self._results)
