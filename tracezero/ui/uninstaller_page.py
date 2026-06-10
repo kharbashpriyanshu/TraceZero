@@ -12,10 +12,10 @@ from typing import List, Dict
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox,
-    QFrame
+    QFrame, QGraphicsOpacityEffect
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QColor, QBrush, QFont
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, pyqtSlot, QTimer, QPropertyAnimation, QEasingCurve
+from PyQt6.QtGui import QColor, QBrush, QFont, QIcon
 
 from tracezero.ui.styles import ThemeManager
 from tracezero.registry.registry_reader import RegistryReader
@@ -56,6 +56,12 @@ class UninstallerPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.apps: List[Dict] = []
+        self._spinner_frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+        self._spinner_idx = 0
+        
+        self.loading_timer = QTimer(self)
+        self.loading_timer.timeout.connect(self._update_spinner)
+        
         self._build_ui()
         self.load_apps()
 
@@ -94,7 +100,7 @@ class UninstallerPage(QWidget):
         # Controls
         ctrl_layout = QHBoxLayout()
         self.status_lbl = QLabel("Loading installed applications...")
-        self.status_lbl.setStyleSheet(f"color: {p['t1']}; font-weight: 600;")
+        self.status_lbl.setStyleSheet(f"color: {p['accent2']}; font-weight: 700; font-size: 14px;")
         ctrl_layout.addWidget(self.status_lbl)
         
         ctrl_layout.addStretch()
@@ -109,6 +115,12 @@ class UninstallerPage(QWidget):
 
         # Table
         self.table = QTableWidget()
+        
+        # Add opacity effect for fade-in animation
+        self.table_opacity = QGraphicsOpacityEffect(self.table)
+        self.table_opacity.setOpacity(0.0)
+        self.table.setGraphicsEffect(self.table_opacity)
+        
         self.table.setColumnCount(6)
         self.table.setHorizontalHeaderLabels([
             "Application Name", "Publisher", "Version", "Install Date", "Estimated Size", "Action"
@@ -123,6 +135,7 @@ class UninstallerPage(QWidget):
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.table.verticalHeader().setVisible(False)
+        self.table.setShowGrid(False)
         
         self._apply_table_style()
         body_layout.addWidget(self.table)
@@ -157,10 +170,20 @@ class UninstallerPage(QWidget):
             }}
         """)
 
+    def _update_spinner(self):
+        self._spinner_idx = (self._spinner_idx + 1) % len(self._spinner_frames)
+        self.status_lbl.setText(f"{self._spinner_frames[self._spinner_idx]} Scanning for installed applications...")
+
     def load_apps(self):
         self.btn_refresh.setEnabled(False)
         self.table.setRowCount(0)
-        self.status_lbl.setText("Loading installed applications...")
+        self.table_opacity.setOpacity(0.0) # Hide table during load
+        
+        # Reset label style for loading
+        self.status_lbl.setStyleSheet(f"color: {ThemeManager.palette()['accent2']}; font-weight: 700; font-size: 14px;")
+        
+        self._spinner_idx = 0
+        self.loading_timer.start(80) # 80ms interval for smooth live animation
         
         self.load_thread = LoadAppsThread()
         self.load_thread.finished.connect(self._on_apps_loaded)
@@ -168,9 +191,11 @@ class UninstallerPage(QWidget):
 
     @pyqtSlot(list)
     def _on_apps_loaded(self, apps: list):
+        self.loading_timer.stop()
         self.apps = apps
         self.btn_refresh.setEnabled(True)
-        self.status_lbl.setText(f"Found {len(apps)} installed applications.")
+        self.status_lbl.setText(f"✨ Found {len(apps)} installed applications ready for smart removal.")
+        self.status_lbl.setStyleSheet(f"color: {ThemeManager.palette()['green']}; font-weight: 700; font-size: 14px;")
         
         self.table.setRowCount(len(apps))
         p = ThemeManager.palette()
@@ -214,23 +239,26 @@ class UninstallerPage(QWidget):
             
             uninstall_btn = QPushButton("Uninstall")
             uninstall_btn.setFixedSize(100, 30)
+            uninstall_btn.setCursor(Qt.CursorShape.PointingHandCursor)
             
             cmd = app.get("uninstall_string", "")
             if not cmd:
                 uninstall_btn.setEnabled(False)
                 uninstall_btn.setText("N/A")
             else:
-                uninstall_btn.setObjectName("btn_primary")
-                uninstall_btn.setStyleSheet(f"""
-                    QPushButton {{
-                        background: {p['red']}; color: white; border-radius: 6px; font-weight: bold;
-                    }}
-                    QPushButton:hover {{ background: #ef4444; }}
-                """)
+                uninstall_btn.setObjectName("btn_danger")
                 uninstall_btn.clicked.connect(lambda _, a=app: self.start_uninstall(a))
             
             btn_layout.addWidget(uninstall_btn)
             self.table.setCellWidget(row, 5, btn_widget)
+            
+        # Trigger live fade-in animation
+        self.fade_anim = QPropertyAnimation(self.table_opacity, b"opacity")
+        self.fade_anim.setDuration(600)
+        self.fade_anim.setStartValue(0.0)
+        self.fade_anim.setEndValue(1.0)
+        self.fade_anim.setEasingCurve(QEasingCurve.Type.InOutQuad)
+        self.fade_anim.start()
 
     def start_uninstall(self, app: Dict):
         cmd = app.get("uninstall_string", "")

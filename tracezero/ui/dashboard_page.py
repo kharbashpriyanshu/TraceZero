@@ -21,61 +21,62 @@ from tracezero.ui.styles import ThemeManager
 #  STAT CARD
 # ─────────────────────────────────────────────────────────────
 class StatCard(QFrame):
-    """Animated stat card — theme-aware."""
+    """Modern, attractive stat card with soft shadows."""
 
     def __init__(self, title: str, value: str, accent: str, icon: str):
         super().__init__()
         self.accent = accent
         self._title = title
         self.setObjectName("stat_card")
-        self.setMinimumHeight(130)
+        self.setMinimumHeight(140)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 18, 20, 18)
-        layout.setSpacing(4)
+        layout.setContentsMargins(24, 20, 24, 20)
+        layout.setSpacing(8)
 
         top = QHBoxLayout()
-        top.addStretch()
         self._icon_lbl = QLabel(icon)
-        self._icon_lbl.setStyleSheet(f"font-size: 22px; background: transparent; color: {accent}66;")
+        self._icon_lbl.setStyleSheet(f"font-size: 26px; background: transparent; color: {accent};")
         top.addWidget(self._icon_lbl)
+        
+        self._title_lbl = QLabel(title)
+        top.addWidget(self._title_lbl)
+        top.addStretch()
         layout.addLayout(top)
 
         self._val_lbl = QLabel(value)
         self._val_lbl.setStyleSheet(
-            f"font-size: 32px; font-weight: 900; color: {accent}; "
-            "background: transparent; letter-spacing: -1px;"
+            f"font-size: 42px; font-weight: 900; color: {accent}; "
+            "background: transparent; letter-spacing: -1.5px; margin-top: 5px;"
         )
         layout.addWidget(self._val_lbl)
-
-        self._title_lbl = QLabel(title)
-        layout.addWidget(self._title_lbl)
-
-        self._bar = QFrame()
-        self._bar.setFixedHeight(2)
-        layout.addWidget(self._bar)
 
         self.refresh_theme()
 
     def refresh_theme(self):
         p = ThemeManager.palette()
         self._title_lbl.setStyleSheet(
-            f"font-size: 12px; color: {p['t2']}; background: transparent; font-weight: 600;"
+            f"font-size: 13px; color: {p['t2']}; background: transparent; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;"
         )
-        self._bar.setStyleSheet(
-            f"background: qlineargradient(x1:0,y1:0,x2:1,y2:0,"
-            f"stop:0 {self.accent}, stop:0.6 {self.accent}44, stop:1 transparent);"
-            "border: none; border-radius: 1px; margin-top: 8px;"
-        )
+        
+        # Soft modern shadow
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(20)
+        shadow.setColor(QColor(0, 0, 0, 30 if ThemeManager.is_dark() else 15))
+        shadow.setOffset(0, 6)
+        self.setGraphicsEffect(shadow)
+        
         self.setStyleSheet(f"""
             QFrame#stat_card {{
                 background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
                     stop:0 {p['card']}, stop:1 {p['panel']});
                 border: 1px solid {p['border']};
-                border-radius: 14px;
+                border-radius: 16px;
             }}
             QFrame#stat_card:hover {{
-                border: 1px solid {self.accent}55;
+                border: 1px solid {self.accent}88;
+                background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                    stop:0 {p['panel']}, stop:1 {p['hover']});
             }}
         """)
 
@@ -122,30 +123,32 @@ class FeatureCard(QFrame):
             QFrame {{
                 background: {p['card']};
                 border: 1px solid {p['border']};
-                border-radius: 13px;
+                border-left: 4px solid {self._color}88;
+                border-radius: 16px;
             }}
         """)
         if hasattr(self, '_title_lbl'):
             self._title_lbl.setStyleSheet(
-                f"font-size: 13px; font-weight: 700; border: none; color: {p['t1']};"
+                f"font-size: 15px; font-weight: 800; border: none; color: {p['t1']};"
             )
         if hasattr(self, '_desc_lbl'):
             self._desc_lbl.setStyleSheet(
-                f"font-size: 11px; border: none; color: {p['t2']};"
+                f"font-size: 12px; border: none; color: {p['t2']}; padding-top: 4px;"
             )
 
     def enterEvent(self, event):
         effect = QGraphicsDropShadowEffect(self)
-        effect.setBlurRadius(28)
-        effect.setOffset(0, 0)
+        effect.setBlurRadius(35)
+        effect.setOffset(0, 8)
         effect.setColor(QColor(self._color))
         self.setGraphicsEffect(effect)
         p = ThemeManager.palette()
         self.setStyleSheet(f"""
             QFrame {{
                 background: {p['hover']};
-                border: 1px solid {self._color}66;
-                border-radius: 13px;
+                border: 1px solid {self._color}aa;
+                border-left: 6px solid {self._color};
+                border-radius: 16px;
             }}
         """)
         super().enterEvent(event)
@@ -190,50 +193,57 @@ class DashboardPage(QWidget):
         left = QVBoxLayout()
         left.setSpacing(6)
 
-        self.welcome_lbl = QLabel("Welcome to")
+        self.welcome_lbl = QLabel("WELCOME TO")
         self.welcome_lbl.setStyleSheet(
-            f"font-size: 13px; color: {p['t2']}; background: transparent; font-weight: 500;"
+            f"font-size: 12px; color: {p['accent2']}; background: transparent; font-weight: 800; letter-spacing: 2px;"
         )
         left.addWidget(self.welcome_lbl)
 
         self.brand_lbl = QLabel("TraceZero ⚡")
         self.brand_lbl.setStyleSheet(
-            f"font-size: 34px; font-weight: 900; border: none;"
-            f" color: {p['t1']}; letter-spacing: -1.5px;"
+            f"font-size: 46px; font-weight: 900; border: none;"
+            f" color: {p['t1']}; letter-spacing: -2px;"
         )
         left.addWidget(self.brand_lbl)
 
-        self.sub_lbl = QLabel("Detect and safely remove leftover application traces from Windows")
+        self.sub_lbl = QLabel("The Ultimate System Optimizer. Detect and safely remove leftover application traces from Windows.")
         self.sub_lbl.setStyleSheet(
-            f"font-size: 13px; color: {p['t2']}; background: transparent;"
+            f"font-size: 14px; color: {p['t2']}; background: transparent; font-weight: 500;"
         )
         left.addWidget(self.sub_lbl)
         hero_row.addLayout(left, 1)
 
         btn_col = QVBoxLayout()
-        btn_col.setSpacing(12)
+        btn_col.setSpacing(10)
+        btn_col.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         
         self.scan_btn = QPushButton("  ⚡  Start Scan")
-        self.scan_btn.setObjectName("btn_primary")
-        self.scan_btn.setFixedSize(170, 50)
+        self.scan_btn.setFixedSize(180, 54)
         self.scan_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.scan_btn.setStyleSheet(self._build_scan_btn_style(p))
         self.scan_btn.clicked.connect(self.scan_requested.emit)
+        
+        # Add a glow to the primary button
+        scan_shadow = QGraphicsDropShadowEffect(self.scan_btn)
+        scan_shadow.setBlurRadius(20)
+        scan_shadow.setOffset(0, 4)
+        scan_shadow.setColor(QColor(p['accent']))
+        self.scan_btn.setGraphicsEffect(scan_shadow)
+
         btn_col.addWidget(self.scan_btn)
         
         self.boost_btn = QPushButton("  🚀  Quick Boost")
-        self.boost_btn.setObjectName("btn_secondary")
-        self.boost_btn.setFixedSize(170, 42)
+        self.boost_btn.setFixedSize(180, 46)
         self.boost_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.boost_btn.clicked.connect(self._run_quick_boost)
         btn_col.addWidget(self.boost_btn)
 
         self.privacy_btn = QPushButton("  🕵️  Privacy Sweep")
-        self.privacy_btn.setObjectName("btn_secondary")
-        self.privacy_btn.setFixedSize(170, 42)
+        self.privacy_btn.setFixedSize(180, 46)
         self.privacy_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.privacy_btn.clicked.connect(self._run_privacy_sweep)
         btn_col.addWidget(self.privacy_btn)
+
+        self._apply_button_styles(p)
 
         hero_row.addLayout(btn_col)
         outer.addWidget(self.hero)
@@ -258,9 +268,9 @@ class DashboardPage(QWidget):
         body_layout.addLayout(grid)
 
         # ── Feature grid ──────────────────────────────────────
-        self.feat_header = QLabel("What TraceZero Does")
+        self.feat_header = QLabel("Premium Capabilities")
         self.feat_header.setStyleSheet(
-            f"font-size: 15px; font-weight: 800; color: {p['t1']}; background: transparent;"
+            f"font-size: 18px; font-weight: 900; color: {p['t1']}; background: transparent; letter-spacing: -0.5px;"
         )
         body_layout.addWidget(self.feat_header)
 
@@ -312,7 +322,7 @@ class DashboardPage(QWidget):
         self.hero.setStyleSheet(f"""
             QFrame#_hero {{
                 background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
-                    stop:0 {p['bg']}, stop:0.5 {p['panel']}, stop:1 {p['card']});
+                    stop:0 {p['accent']}18, stop:0.4 {p['bg']}, stop:1 {p['bg']});
                 border-bottom: 1px solid {p['border']};
             }}
         """)
@@ -327,39 +337,59 @@ class DashboardPage(QWidget):
             }}
         """)
 
-    def _build_scan_btn_style(self, p) -> str:
-        return f"""
+    def _apply_button_styles(self, p):
+        self.scan_btn.setStyleSheet(f"""
             QPushButton {{
                 background: qlineargradient(x1:0,y1:0,x2:1,y2:0,
                     stop:0 {p['accent']}, stop:1 {p['accent2']});
-                color: #fff; border: none; border-radius: 11px;
-                font-size: 15px; font-weight: 800;
+                color: #ffffff; border: none; border-radius: 14px;
+                font-size: 16px; font-weight: 900; letter-spacing: 0.5px;
             }}
             QPushButton:hover {{
                 background: qlineargradient(x1:0,y1:0,x2:1,y2:0,
-                    stop:0 {p['accent2']}, stop:1 #c4b5fd);
+                    stop:0 {p['accent2']}, stop:1 #818cf8);
+                border: 1px solid #a5b4fc;
             }}
             QPushButton:pressed {{ background: {p['accent']}; }}
+        """)
+        
+        secondary_style = f"""
+            QPushButton {{
+                background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                    stop:0 {p['panel']}, stop:1 {p['bg']});
+                color: {p['t1']}; 
+                border: 1px solid {p['border']}; 
+                border-radius: 12px;
+                font-size: 14px; font-weight: 700;
+            }}
+            QPushButton:hover {{ 
+                background: {p['hover']}; 
+                border: 1px solid {p['accent']}88;
+                color: {p['accent2']};
+            }}
+            QPushButton:pressed {{ background: {p['bg']}; }}
         """
+        self.boost_btn.setStyleSheet(secondary_style)
+        self.privacy_btn.setStyleSheet(secondary_style)
 
     def apply_theme(self):
         """Called by MainWindow when theme is toggled."""
         p = ThemeManager.palette()
         self._apply_hero_style(p)
         self._apply_notice_style(p)
-        self.scan_btn.setStyleSheet(self._build_scan_btn_style(p))
+        self._apply_button_styles(p)
         self.brand_lbl.setStyleSheet(
-            f"font-size: 34px; font-weight: 900; border: none;"
-            f" color: {p['t1']}; letter-spacing: -1.5px;"
+            f"font-size: 46px; font-weight: 900; border: none;"
+            f" color: {p['t1']}; letter-spacing: -2px;"
         )
         self.welcome_lbl.setStyleSheet(
-            f"font-size: 13px; border: none; color: {p['t2']}; font-weight: 500;"
+            f"font-size: 12px; color: {p['accent2']}; background: transparent; font-weight: 800; letter-spacing: 2px;"
         )
         self.sub_lbl.setStyleSheet(
-            f"font-size: 13px; border: none; color: {p['t2']};"
+            f"font-size: 14px; color: {p['t2']}; background: transparent; font-weight: 500;"
         )
         self.feat_header.setStyleSheet(
-            f"font-size: 15px; font-weight: 800; border: none; color: {p['t1']};"
+            f"font-size: 18px; font-weight: 900; border: none; color: {p['t1']}; letter-spacing: -0.5px;"
         )
         for card in [self.card_scans, self.card_items, self.card_freed, self.card_cleaned]:
             card.refresh_theme()

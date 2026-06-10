@@ -58,25 +58,32 @@ def get_file_age_days(path: Path) -> Optional[int]:
         return None
 
 
-def get_dir_size(path: Path) -> int:
+def get_dir_size(path) -> int:
     """
-    Recursively calculate total size of a directory.
+    Fast iterative calculation of total directory size.
+    Uses a stack and raw strings to bypass Path instantiation and recursion overhead.
 
     Returns:
         Total size in bytes.
     """
     total = 0
-    try:
-        for entry in os.scandir(path):
-            try:
-                if entry.is_dir(follow_symlinks=False):
-                    total += get_dir_size(Path(entry.path))
-                else:
-                    total += entry.stat(follow_symlinks=False).st_size
-            except (PermissionError, OSError):
-                continue
-    except (PermissionError, OSError):
-        pass
+    stack = [str(path)]
+    
+    while stack:
+        current_dir = stack.pop()
+        try:
+            with os.scandir(current_dir) as it:
+                for entry in it:
+                    try:
+                        if entry.is_dir(follow_symlinks=False):
+                            stack.append(entry.path)
+                        else:
+                            total += entry.stat(follow_symlinks=False).st_size
+                    except (PermissionError, OSError):
+                        continue
+        except (PermissionError, OSError):
+            continue
+            
     return total
 
 

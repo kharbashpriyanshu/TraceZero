@@ -217,6 +217,7 @@ class DatabaseManager:
                     "category": i.category,
                     "risk_level": i.risk_level,
                     "app_name": i.app_name,
+                    "session_id": i.session_id,
                 }
                 for i in items
             ]
