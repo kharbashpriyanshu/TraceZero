@@ -30,6 +30,7 @@ a = Analysis(
         'sqlalchemy.pool',
         'sqlalchemy.event',
         'sqlalchemy.sql.default_comparator',
+        'sqlalchemy.sql.cache_key',
         # Windows
         'win32com.client',
         'win32com',
