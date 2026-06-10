@@ -46,11 +46,7 @@ def main():
 
     if not check_dependencies():
         sys.exit(1)
-
-    QApplication.setHighDpiScaleFactorRoundingPolicy(
-        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
-    )
-    
+        
     app = QApplication(sys.argv)
     app.setApplicationName("TraceZero")
     app.setApplicationVersion(APP_VERSION)

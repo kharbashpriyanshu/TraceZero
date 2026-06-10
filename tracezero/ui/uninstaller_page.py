@@ -218,7 +218,7 @@ class UninstallerPage(QWidget):
             cmd = app.get("uninstall_string", "")
             if not cmd:
                 uninstall_btn.setEnabled(False)
-                uninstall_btn.setText("No Uninstaller")
+                uninstall_btn.setText("N/A")
             else:
                 uninstall_btn.setObjectName("btn_primary")
                 uninstall_btn.setStyleSheet(f"""
