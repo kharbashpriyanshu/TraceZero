@@ -25,6 +25,8 @@ from tracezero.ui.history_page import HistoryPage
 from tracezero.ui.settings_page import SettingsPage
 from tracezero.ui.startup_page import StartupPage
 from tracezero.ui.duplicate_page import DuplicatePage
+from tracezero.ui.uninstaller_page import UninstallerPage
+from tracezero.ui.analyzer_page import AnalyzerPage
 from tracezero.ui.styles import MAIN_STYLESHEET, ThemeManager
 from tracezero.scanner.scan_engine import ScanEngine
 from tracezero.utils.recycle_bin import RecycleBinManager
@@ -128,11 +130,14 @@ class MainWindow(QMainWindow):
         self.history_page   = HistoryPage(self)
         self.startup_page   = StartupPage(self)
         self.duplicate_page = DuplicatePage(self)
+        self.uninstaller_page = UninstallerPage(self)
+        self.analyzer_page  = AnalyzerPage(self)
         self.settings_page  = SettingsPage(self)
 
         for page in [self.dashboard_page, self.scan_page,
                      self.history_page, self.startup_page, 
-                     self.duplicate_page, self.settings_page]:
+                     self.duplicate_page, self.uninstaller_page,
+                     self.analyzer_page, self.settings_page]:
             self.stack.addWidget(page)
 
         self.status_bar = QStatusBar()
@@ -218,7 +223,9 @@ class MainWindow(QMainWindow):
             ("📋", "History",     2),
             ("🚀", "Startup Apps",3),
             ("👯", "Duplicates",  4),
-            ("⚙️", "Settings",    5),
+            ("🗑", "Uninstaller", 5),
+            ("🗺", "Space Map",   6),
+            ("⚙️", "Settings",    7),
         ]
         for icon, label, idx in items:
             btn = NavButton(icon, label)
@@ -286,6 +293,10 @@ class MainWindow(QMainWindow):
             self.startup_page.apply_theme()
         if hasattr(self.duplicate_page, 'apply_theme'):
             self.duplicate_page.apply_theme()
+        if hasattr(self.uninstaller_page, 'apply_theme'):
+            self.uninstaller_page.apply_theme()
+        if hasattr(self.analyzer_page, 'apply_theme'):
+            self.analyzer_page.apply_theme()
         if hasattr(self.scan_page, 'apply_theme'):
             self.scan_page.apply_theme()
         if hasattr(self.history_page, 'apply_theme'):
@@ -308,6 +319,11 @@ class MainWindow(QMainWindow):
     def _start_scan_from_dashboard(self):
         self._navigate(1)
         self.scan_page.start_scan()
+
+    @pyqtSlot(str)
+    def start_analyzer(self, path: str):
+        self._navigate(6)
+        self.analyzer_page.start_scan(path)
 
     @pyqtSlot(list)
     def _handle_deletion(self, items: List[Dict]):

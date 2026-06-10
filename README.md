@@ -176,9 +176,10 @@ python -m pytest tests/ -v
 - [x] Startup apps manager
 - [x] Duplicate file finder
 - [x] Windows Core Cleanup (Deep OS cache: Prefetch, Windows Update)
-- [ ] Scheduled automatic scans
-- [ ] Disk space treemap view
-- [ ] Windows context menu integration
+- [x] Smart Uninstaller Module
+- [x] Disk Space Visualizer (TreeSize / SpaceSniffer view)
+- [x] Windows context menu integration
+- [ ] Scheduled automatic background scans
 - [ ] Multi-language support
 
 ---

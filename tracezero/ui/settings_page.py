@@ -16,6 +16,7 @@ from tracezero.utils.constants import (
 from tracezero.database.db_manager import get_db
 from tracezero.ui.styles import ThemeManager
 import tracezero.utils.config as cfg
+from tracezero.utils.context_menu import is_context_menu_installed, install_context_menu, remove_context_menu
 
 
 class SettingsPage(QWidget):
@@ -141,6 +142,20 @@ class SettingsPage(QWidget):
             sl.addWidget(cb)
 
         self._layout.addWidget(scan_card)
+
+        # ── Windows Integration card ──────────────────────────
+        win_card = self._card(p)
+        wl = QVBoxLayout(win_card)
+        wl.setContentsMargins(22, 18, 22, 18)
+        wl.setSpacing(14)
+        wl.addWidget(self._hdr("🖱", "WINDOWS INTEGRATION", p))
+        wl.addWidget(self._divider(p))
+
+        self.chk_context_menu = self._checkbox("Add \"Analyze Space with TraceZero\" to Windows right-click menu", is_context_menu_installed(), p)
+        self.chk_context_menu.toggled.connect(self._toggle_context_menu)
+        wl.addWidget(self.chk_context_menu)
+        
+        self._layout.addWidget(win_card)
 
         # ── Analysis Thresholds card ──────────────────────────
         analysis_card = self._card(p)
@@ -302,6 +317,22 @@ class SettingsPage(QWidget):
         """Rebuild content with updated theme colors."""
         self._clear_widgets()
         self._populate()
+
+    def _toggle_context_menu(self, checked: bool):
+        if checked:
+            success = install_context_menu()
+            if not success:
+                QMessageBox.warning(self, "Error", "Failed to add context menu. You may need to run as Administrator.")
+                self.chk_context_menu.blockSignals(True)
+                self.chk_context_menu.setChecked(False)
+                self.chk_context_menu.blockSignals(False)
+        else:
+            success = remove_context_menu()
+            if not success:
+                QMessageBox.warning(self, "Error", "Failed to remove context menu. You may need to run as Administrator.")
+                self.chk_context_menu.blockSignals(True)
+                self.chk_context_menu.setChecked(True)
+                self.chk_context_menu.blockSignals(False)
 
     # ── Custom Paths ───────────────────────────────────────────
     def _refresh_custom_paths(self, p=None):

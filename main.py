@@ -59,6 +59,17 @@ def main():
 
     from tracezero.ui.main_window import MainWindow
     window = MainWindow()
+    
+    # Handle context menu launch
+    if "--analyze" in sys.argv:
+        try:
+            idx = sys.argv.index("--analyze")
+            if idx + 1 < len(sys.argv):
+                target_path = sys.argv[idx + 1]
+                window.start_analyzer(target_path)
+        except Exception as e:
+            app_logger.error(f"Failed to start analyzer from CLI: {e}")
+            
     window.show()
 
     sys.exit(app.exec())
