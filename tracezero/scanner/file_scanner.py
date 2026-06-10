@@ -299,19 +299,14 @@ class FileScanner:
 
         # Only flag top-level directories inside AppData locations
         appdata_roots = [
-            str(p).lower() for paths in SCAN_PATHS["appdata"] for p in paths
-            if isinstance(paths, list)
+            str(p).lower() for p in SCAN_PATHS.get("appdata", [])
         ]
-        # Flatten
-        flat_roots = []
-        for paths in SCAN_PATHS["appdata"]:
-            flat_roots.append(str(paths).lower())
 
         path_lower = str(path).lower()
         parent_lower = str(path.parent).lower()
 
         is_direct_child_of_appdata = any(
-            parent_lower == root for root in flat_roots
+            parent_lower == root for root in appdata_roots
         )
 
         if not is_direct_child_of_appdata:
