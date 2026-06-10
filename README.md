@@ -179,8 +179,8 @@ python -m pytest tests/ -v
 - [x] Smart Uninstaller Module
 - [x] Disk Space Visualizer (TreeSize / SpaceSniffer view)
 - [x] Windows context menu integration
-- [ ] Scheduled automatic background scans
-- [ ] Multi-language support
+- [x] Scheduled automatic background scans
+- [x] Multi-language support (i18n)
 
 ---
 

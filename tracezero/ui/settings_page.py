@@ -17,6 +17,9 @@ from tracezero.database.db_manager import get_db
 from tracezero.ui.styles import ThemeManager
 import tracezero.utils.config as cfg
 from tracezero.utils.context_menu import is_context_menu_installed, install_context_menu, remove_context_menu
+from tracezero.utils.scheduler import is_task_scheduled, schedule_weekly_cleanup, remove_scheduled_cleanup
+from tracezero.utils.i18n import t, get_available_languages
+from PyQt6.QtWidgets import QComboBox
 
 
 class SettingsPage(QWidget):
@@ -155,7 +158,49 @@ class SettingsPage(QWidget):
         self.chk_context_menu.toggled.connect(self._toggle_context_menu)
         wl.addWidget(self.chk_context_menu)
         
+        self.chk_scheduled_scan = self._checkbox("Enable Automatic Weekly Background Cleanups (Every Sunday at 12:00 PM)", is_task_scheduled(), p)
+        self.chk_scheduled_scan.toggled.connect(self._toggle_scheduled_scan)
+        wl.addWidget(self.chk_scheduled_scan)
+        
         self._layout.addWidget(win_card)
+
+        # ── Language card ──────────────────────────
+        lang_card = self._card(p)
+        ll = QVBoxLayout(lang_card)
+        ll.setContentsMargins(22, 18, 22, 18)
+        ll.setSpacing(14)
+        ll.addWidget(self._hdr("🌐", t("settings.title"), p))
+        ll.addWidget(self._divider(p))
+
+        lbl = QLabel(t("settings.lbl"))
+        lbl.setStyleSheet(f"color: {p['t1']}; font-weight: 500;")
+        ll.addWidget(lbl)
+
+        self.lang_combo = QComboBox()
+        self.lang_combo.setFixedSize(250, 36)
+        self.lang_combo.setStyleSheet(f"""
+            QComboBox {{
+                background: {p['bg']}; color: {p['t1']};
+                border: 1px solid {p['border']}; border-radius: 6px; padding: 4px 10px;
+            }}
+            QComboBox::drop-down {{ border: none; }}
+        """)
+        
+        languages = get_available_languages()
+        current_lang = cfg.get("language")
+        
+        for code, name in languages.items():
+            self.lang_combo.addItem(name, code)
+            
+        # Set current
+        idx = self.lang_combo.findData(current_lang)
+        if idx >= 0:
+            self.lang_combo.setCurrentIndex(idx)
+            
+        self.lang_combo.currentIndexChanged.connect(self._change_language)
+        ll.addWidget(self.lang_combo)
+        
+        self._layout.addWidget(lang_card)
 
         # ── Analysis Thresholds card ──────────────────────────
         analysis_card = self._card(p)
@@ -333,6 +378,30 @@ class SettingsPage(QWidget):
                 self.chk_context_menu.blockSignals(True)
                 self.chk_context_menu.setChecked(True)
                 self.chk_context_menu.blockSignals(False)
+
+    def _toggle_scheduled_scan(self, checked: bool):
+        if checked:
+            success = schedule_weekly_cleanup()
+            if not success:
+                QMessageBox.warning(self, "Error", "Failed to create Windows Scheduled Task. You may need to run as Administrator.")
+                self.chk_scheduled_scan.blockSignals(True)
+                self.chk_scheduled_scan.setChecked(False)
+                self.chk_scheduled_scan.blockSignals(False)
+        else:
+            success = remove_scheduled_cleanup()
+            if not success:
+                QMessageBox.warning(self, "Error", "Failed to remove Windows Scheduled Task. You may need to run as Administrator.")
+                self.chk_scheduled_scan.blockSignals(True)
+                self.chk_scheduled_scan.setChecked(True)
+                self.chk_scheduled_scan.blockSignals(False)
+
+    def _change_language(self, index: int):
+        code = self.lang_combo.itemData(index)
+        cfg.set("language", code)
+        QMessageBox.information(
+            self, "Language Changed", 
+            "Language preference saved successfully!\n\nPlease restart TraceZero to apply the new language."
+        )
 
     # ── Custom Paths ───────────────────────────────────────────
     def _refresh_custom_paths(self, p=None):

@@ -28,6 +28,7 @@ from tracezero.ui.duplicate_page import DuplicatePage
 from tracezero.ui.uninstaller_page import UninstallerPage
 from tracezero.ui.analyzer_page import AnalyzerPage
 from tracezero.ui.styles import MAIN_STYLESHEET, ThemeManager
+from tracezero.utils.i18n import t
 from tracezero.scanner.scan_engine import ScanEngine
 from tracezero.utils.recycle_bin import RecycleBinManager
 from tracezero.utils.helpers import format_size
@@ -218,14 +219,14 @@ class MainWindow(QMainWindow):
         # ── Nav items ─────────────────────────────────────────
         self.nav_btns: List[NavButton] = []
         items = [
-            ("🏠", "Dashboard",   0),
-            ("🔍", "Scan && Clean",1),
-            ("📋", "History",     2),
-            ("🚀", "Startup Apps",3),
-            ("👯", "Duplicates",  4),
-            ("🗑", "Uninstaller", 5),
-            ("🗺", "Space Map",   6),
-            ("⚙️", "Settings",    7),
+            ("🏠", t("nav.dashboard"),   0),
+            ("🔍", t("nav.scan"),        1),
+            ("📋", t("nav.history"),     2),
+            ("🚀", t("nav.startup"),     3),
+            ("👯", t("nav.duplicates"),  4),
+            ("🗑", t("nav.uninstaller"), 5),
+            ("🗺", t("nav.spacemap"),    6),
+            ("⚙️", t("nav.settings"),    7),
         ]
         for icon, label, idx in items:
             btn = NavButton(icon, label)

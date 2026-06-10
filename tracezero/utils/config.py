@@ -23,6 +23,7 @@ _DEFAULTS = {
     "scan_shortcuts": True,
     "old_file_days": 90,
     "auto_select_safe": False,
+    "language": "en",
 }
 
 
