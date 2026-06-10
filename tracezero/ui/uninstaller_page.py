@@ -19,6 +19,7 @@ from PyQt6.QtGui import QColor, QBrush, QFont
 
 from tracezero.ui.styles import ThemeManager
 from tracezero.registry.registry_reader import RegistryReader
+from tracezero.utils.helpers import format_size
 
 
 class UninstallThread(QThread):
@@ -108,16 +109,17 @@ class UninstallerPage(QWidget):
 
         # Table
         self.table = QTableWidget()
-        self.table.setColumnCount(5)
+        self.table.setColumnCount(6)
         self.table.setHorizontalHeaderLabels([
-            "Application Name", "Publisher", "Version", "Install Date", "Action"
+            "Application Name", "Publisher", "Version", "Install Date", "Estimated Size", "Action"
         ])
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
-        self.table.setColumnWidth(4, 130)
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.Fixed)
+        self.table.setColumnWidth(5, 130)
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.table.verticalHeader().setVisible(False)
@@ -196,6 +198,13 @@ class UninstallerPage(QWidget):
             date_item = QTableWidgetItem(formatted_date)
             date_item.setForeground(QBrush(QColor(p['t2'])))
             self.table.setItem(row, 3, date_item)
+            # Estimated Size
+            size_bytes = app.get("estimated_size", 0)
+            size_text = format_size(size_bytes) if size_bytes > 0 else "Unknown"
+            size_item = QTableWidgetItem(size_text)
+            size_item.setForeground(QBrush(QColor(p['t1'])))
+            size_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter)
+            self.table.setItem(row, 4, size_item)
             
             # Action Button
             btn_widget = QWidget()
@@ -221,7 +230,7 @@ class UninstallerPage(QWidget):
                 uninstall_btn.clicked.connect(lambda _, a=app: self.start_uninstall(a))
             
             btn_layout.addWidget(uninstall_btn)
-            self.table.setCellWidget(row, 4, btn_widget)
+            self.table.setCellWidget(row, 5, btn_widget)
 
     def start_uninstall(self, app: Dict):
         cmd = app.get("uninstall_string", "")

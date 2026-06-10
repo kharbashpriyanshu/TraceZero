@@ -139,6 +139,15 @@ class RegistryReader:
         if is_protected_package(name):
             return None
 
+        # Extract size (stored as KB in registry)
+        size_bytes = 0
+        try:
+            val, _ = winreg.QueryValueEx(key, "EstimatedSize")
+            if isinstance(val, int):
+                size_bytes = val * 1024
+        except (FileNotFoundError, OSError):
+            pass
+
         return {
             "name": name,
             "publisher": get_val("Publisher"),
@@ -146,6 +155,7 @@ class RegistryReader:
             "install_location": get_val("InstallLocation"),
             "install_date": get_val("InstallDate"),
             "uninstall_string": get_val("UninstallString"),
+            "estimated_size": size_bytes,
             "source": "registry",
             "registry_key": key_name,
         }
